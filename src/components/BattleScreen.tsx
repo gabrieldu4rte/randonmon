@@ -6,27 +6,38 @@ import { PokemonCard } from './Pokemon/PokemonCard';
 import { calculateStatsForLevel } from '../logic/progression';
 
 interface BattleScreenProps {
-  playerPokemon: Pokemon;
+  playerTeam: Pokemon[];
+  activePokemonIndex: number;
   wins: number;
   onBattleEnd: (didPlayerWin: boolean, defeatedEnemy: Pokemon | null, finalPlayerHp: number) => void;
+  onSwitchPokemon: (newIndex: number) => void;
+  onPlayerPokemonFaint: () => void;
+  onPlayerHpUpdate: (newHp: number) => void;
   endOfBattleMessages: string[];
   onMessageSequenceEnd: () => void;
 }
 
 export const BattleScreen: React.FC<BattleScreenProps> = ({ 
-  playerPokemon, 
+  playerTeam,
+  activePokemonIndex,
   wins, 
   onBattleEnd,
+  onSwitchPokemon,
+  onPlayerPokemonFaint,
+  onPlayerHpUpdate,
   endOfBattleMessages,
   onMessageSequenceEnd,
 }) => {
+  const playerPokemon = playerTeam[activePokemonIndex];
+  
   const [enemyPokemon, setEnemyPokemon] = useState<Pokemon | null>(null);
-  const [playerCurrentHp, setPlayerCurrentHp] = useState(playerPokemon.currentHp);
   const [enemyCurrentHp, setEnemyCurrentHp] = useState<number | null>(null);
   const [message, setMessage] = useState('');
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
   const [turnInProgress, setTurnInProgress] = useState(true);
   const [battleOver, setBattleOver] = useState(false);
+  const [actionView, setActionView] = useState<'moves' | 'pokemon'>('moves');
+  const [isForcedSwitch, setIsForcedSwitch] = useState(false);
 
   useEffect(() => {
     if (battleOver && endOfBattleMessages.length > 0) {
@@ -48,7 +59,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   useEffect(() => {
     const fetchEnemy = async () => {
       setTurnInProgress(true);
-      setMessage("Looking for opponent...");
+      setMessage("Procurando oponente...");
       const randomId = Math.floor(Math.random() * 151) + 1;
       const enemyData = await getPokemonDetails(randomId);
       enemyData.level = Math.max(3, playerPokemon.level - 1 + wins + Math.floor(Math.random() * 2));
@@ -58,51 +69,55 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       setEnemyCurrentHp(enemyData.stats.hp);
       const playerStarts = playerPokemon.stats.speed >= enemyData.stats.speed;
       setIsPlayerTurn(playerStarts);
-      setMessage(`A wild ${enemyData.name} appeared!`);
+      setMessage(`Um ${enemyData.name} (Nv. ${enemyData.level}) selvagem apareceu!`);
       setTurnInProgress(false);
     };
     fetchEnemy();
-
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); 
 
   const handleEnemyMove = useCallback(() => {
-    if (!enemyPokemon || battleOver) return;
+    if (!enemyPokemon || battleOver || !playerPokemon) return;
 
     setTurnInProgress(true);
     const randomMove = enemyPokemon.moves[Math.floor(Math.random() * enemyPokemon.moves.length)];
-    setMessage(`${enemyPokemon.name} used ${randomMove.name}!`);
+    setMessage(`${enemyPokemon.name} usou ${randomMove.name}!`);
     
     setTimeout(() => {
       const { damage, effectivenessMessage } = calculateDamage(enemyPokemon, playerPokemon, randomMove);
-      const newPlayerHp = Math.max(0, playerCurrentHp - damage);
-      setPlayerCurrentHp(newPlayerHp);
+      // Lê o HP mais recente direto das props e calcula o novo valor
+      const newPlayerHp = Math.max(0, playerPokemon.currentHp - damage);
+      // Informa o App.tsx sobre a mudança de HP
+      onPlayerHpUpdate(newPlayerHp);
       
       if (effectivenessMessage) {
         setMessage(effectivenessMessage);
-        setTimeout(() => {
-          if (newPlayerHp === 0) {
-            setBattleOver(true);
-            setMessage(`${playerPokemon.name} was defeated!`);
-            onBattleEnd(false, null, 0);
-          } else {
-            setIsPlayerTurn(true);
-            setTurnInProgress(false);
-            setMessage(`What will ${playerPokemon.name} do?`);
-          }
-        }, 1500);
-      } else {
+      }
+
+      setTimeout(() => {
         if (newPlayerHp === 0) {
-          setBattleOver(true);
-          setMessage(`${playerPokemon.name} was defeated!`);
-          onBattleEnd(false, null, 0);
+          onPlayerPokemonFaint();
+          setMessage(`${playerPokemon.name} desmaiou!`);
+
+          const hasOtherPokemon = playerTeam.some((p) => p.currentHp > 0 && p.id !== playerPokemon.id);
+
+          if (hasOtherPokemon) {
+            setIsForcedSwitch(true);
+            setActionView('pokemon');
+            setIsPlayerTurn(true); 
+            setTurnInProgress(false);
+          } else {
+            setBattleOver(true);
+            onBattleEnd(false, null, 0);
+          }
         } else {
           setIsPlayerTurn(true);
           setTurnInProgress(false);
-          setMessage(`What will ${playerPokemon.name} do?`);
+          setMessage("Sua vez! O que fazer?");
         }
-      }
+      }, 1500);
     }, 1200);
-  }, [enemyPokemon, playerPokemon, battleOver, playerCurrentHp, onBattleEnd]);
+  }, [enemyPokemon, playerPokemon, battleOver, playerTeam, onPlayerPokemonFaint, onBattleEnd, onPlayerHpUpdate]);
 
   useEffect(() => {
     if (!isPlayerTurn && !turnInProgress && !battleOver) {
@@ -114,7 +129,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     if (!isPlayerTurn || !enemyPokemon || !enemyCurrentHp || turnInProgress || battleOver) return;
     
     setTurnInProgress(true);
-    setMessage(`${playerPokemon.name} used ${move.name}!`);
+    setMessage(`${playerPokemon.name} usou ${move.name}!`);
     
     setTimeout(() => {
       const { damage, effectivenessMessage } = calculateDamage(playerPokemon, enemyPokemon, move);
@@ -128,8 +143,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       setTimeout(() => {
         if (newEnemyHp === 0) {
           setBattleOver(true);
-          setMessage(`${enemyPokemon.name} was defeated!`);
-          onBattleEnd(true, enemyPokemon, playerCurrentHp);
+          setMessage(`${enemyPokemon.name} foi derrotado!`);
+          onBattleEnd(true, enemyPokemon, playerPokemon.currentHp); // Passa o HP atual do jogador
         } else {
           setIsPlayerTurn(false);
           setTurnInProgress(false);
@@ -137,48 +152,96 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       }, 1500);
     }, 1200);
   };
+  
+  const executeSwitch = (newIndex: number) => {
+    if (turnInProgress || battleOver) return;
+
+    const oldPokemonName = playerPokemon.name;
+    const newPokemonName = playerTeam[newIndex].name;
+
+    setTurnInProgress(true);
+    setMessage(`${oldPokemonName}, volte! Vai, ${newPokemonName}!`);
+    
+    setTimeout(() => {
+      onSwitchPokemon(newIndex);
+      setActionView('moves');
+
+      if (isForcedSwitch) {
+        setIsForcedSwitch(false);
+        setIsPlayerTurn(true);
+        setTurnInProgress(false);
+        setMessage("O que fazer?");
+      } else {
+        setIsPlayerTurn(false);
+        setTurnInProgress(false);
+      }
+    }, 2000);
+  };
 
   if (!enemyPokemon) {
-    return <div className="w-full h-screen bg-gray-800 flex items-center justify-center text-white text-2xl animate-pulse">Looking for opponent...</div>;
+    return <div className="w-full h-screen bg-gray-800 flex items-center justify-center text-white text-2xl animate-pulse">Procurando um oponente...</div>;
   }
   
   return (
     <div className="w-full h-screen bg-gray-800 flex flex-col p-4 overflow-hidden">
       <div className="flex justify-between items-start">
-        <PokemonCard pokemon={playerPokemon} currentHp={playerCurrentHp} isPlayer />
+        {/* Agora lê o HP direto da prop, a fonte da verdade */}
+        <PokemonCard pokemon={playerPokemon} currentHp={playerPokemon.currentHp} isPlayer />
         <PokemonCard pokemon={enemyPokemon} currentHp={enemyCurrentHp || 0} />
       </div>
       <div className="flex-grow relative flex justify-between items-end">
         <div className="absolute bottom-0 left-[10%] w-1/2 flex justify-center">
-            <img 
-                src={playerPokemon.sprites.back_default} 
-                alt={playerPokemon.name}
-                className="w-64 h-64 object-contain"
-            />
+            <img src={playerPokemon.sprites.back_default} alt={playerPokemon.name} className="w-64 h-64 object-contain" />
         </div>
         <div className="absolute bottom-[5%] right-[10%] w-1/2 flex justify-center">
-            <img 
-                src={enemyPokemon.sprites.front_default} 
-                alt={enemyPokemon.name}
-                className="w-56 h-56 object-contain"
-            />
+            <img src={enemyPokemon.sprites.front_default} alt={enemyPokemon.name} className="w-56 h-56 object-contain" />
         </div>
       </div>
+      
       <div className="bg-gray-100 h-48 border-t-8 border-gray-400 p-4 grid grid-cols-2 gap-4">
         <div className="bg-white border-4 border-gray-300 rounded-lg flex items-center justify-center p-4">
           <p className="text-2xl font-semibold text-gray-800">{message}</p>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          {isPlayerTurn && !battleOver && playerPokemon.moves.map(move => (
-              <button 
-                key={move.name} 
-                onClick={() => handlePlayerMove(move)}
-                disabled={turnInProgress}
-                className="bg-white hover:bg-gray-200 border-4 border-gray-400 text-gray-800 font-bold text-lg py-2 px-4 rounded-lg capitalize shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed transform hover:scale-105"
-              >
-                  {move.name}
-              </button>
-          ))}
+
+        <div className="flex flex-col h-full">
+          {isPlayerTurn && !battleOver && (
+            <>
+              {actionView === 'moves' ? (
+                <div className="grid grid-cols-2 gap-3 h-full">
+                  {playerPokemon.moves.map(move => (
+                    <button key={move.name} onClick={() => handlePlayerMove(move)} disabled={turnInProgress}
+                      className="bg-white hover:bg-gray-200 border-4 border-gray-400 text-gray-800 font-bold text-lg py-2 px-4 rounded-lg capitalize shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed transform hover:scale-105">
+                      {move.name}
+                    </button>
+                  ))}
+                  <button onClick={() => setActionView('pokemon')} disabled={turnInProgress || playerTeam.length <= 1}
+                    className="col-span-2 bg-yellow-500 hover:bg-yellow-600 border-4 border-yellow-700 text-white font-bold text-lg py-2 px-4 rounded-lg shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    Trocar Pokémon
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col h-full justify-between">
+                  <div className="overflow-y-auto grid grid-cols-2 gap-3 pr-2">
+                    {playerTeam.map((pokemon, index) => {
+                      if (index === activePokemonIndex && !isForcedSwitch) return null;
+                      return (
+                        <button key={pokemon.id} onClick={() => executeSwitch(index)} disabled={pokemon.currentHp <= 0}
+                          className="bg-white hover:bg-gray-200 border-4 border-gray-400 text-gray-800 font-bold text-lg py-2 px-4 rounded-lg capitalize shadow-md disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed">
+                          {pokemon.name} <span className="text-sm">({pokemon.currentHp}/{pokemon.stats.hp} HP)</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {!isForcedSwitch && (
+                    <button onClick={() => setActionView('moves')}
+                      className="mt-2 bg-gray-500 hover:bg-gray-600 border-4 border-gray-700 text-white font-bold text-lg py-2 px-4 rounded-lg shadow-md">
+                      Voltar
+                    </button>
+                  )}
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -22,6 +22,7 @@ function App() {
     setGameState(prevState => ({
       ...prevState,
       playerTeam: [pokemon],
+      activePokemonIndex: 0,
       gamePhase: 'battle',
     }));
   };
@@ -34,7 +35,7 @@ function App() {
     if (didPlayerWin && defeatedEnemy) {
       const messages: string[] = [];
       const xpGained = calculateExperienceGain(activePokemon, defeatedEnemy);
-      messages.push(`${activePokemon.name} gained ${xpGained} experience points!`);
+      messages.push(`${activePokemon.name} ganhou ${xpGained} XP!`);
       activePokemon.experience += xpGained;
 
       const { leveledUp, newPokemon, levelUpMessage } = checkForLevelUp(activePokemon);
@@ -75,14 +76,37 @@ function App() {
     }));
   };
 
+  const handleSwitchPokemon = (newIndex: number) => {
+    if (newIndex === gameState.activePokemonIndex || newIndex >= gameState.playerTeam.length) return;
+    setGameState(prevState => ({
+      ...prevState,
+      activePokemonIndex: newIndex,
+    }));
+  };
+
+  const handlePlayerPokemonFaint = () => {
+    const newTeam = [...gameState.playerTeam];
+    const faintedPokemon = newTeam[gameState.activePokemonIndex];
+    if(faintedPokemon) faintedPokemon.currentHp = 0;
+    setGameState(prevState => ({...prevState, playerTeam: newTeam}));
+  };
+
+  const handlePlayerHpUpdate = (newHp: number) => {
+    const newTeam = [...gameState.playerTeam];
+    const currentPokemon = newTeam[gameState.activePokemonIndex];
+    if (currentPokemon) {
+      currentPokemon.currentHp = newHp;
+      setGameState(prevState => ({ ...prevState, playerTeam: newTeam }));
+    }
+  };
+
   const handleHeal = () => {
     const newTeam = [...gameState.playerTeam];
     const activePokemon = newTeam[gameState.activePokemonIndex];
-    const oldHp = activePokemon.currentHp;
-    activePokemon.currentHp = Math.min(activePokemon.stats.hp, oldHp + 50);
+    activePokemon.currentHp = activePokemon.stats.hp;
     
     setGameState(prevState => ({ ...prevState, playerTeam: newTeam }));
-    setPostBattleMessage(`${activePokemon.name} was healed!`);
+    setPostBattleMessage(`${activePokemon.name} foi totalmente curado!`);
   };
 
   const handleCapture = () => {
@@ -91,13 +115,15 @@ function App() {
     const success = calculateCaptureChance(gameState.enemyPokemon, pokeball.multiplier);
 
     if (success && gameState.playerTeam.length < 6) {
-      const newTeam = [...gameState.playerTeam, gameState.enemyPokemon];
+      const newPokemon = { ...gameState.enemyPokemon };
+      newPokemon.currentHp = newPokemon.stats.hp;
+      const newTeam = [...gameState.playerTeam, newPokemon];
       setGameState(prevState => ({ ...prevState, playerTeam: newTeam }));
-      setPostBattleMessage(`Gotcha! ${gameState.enemyPokemon.name} was caught!`);
+      setPostBattleMessage(`Você capturou ${gameState.enemyPokemon.name}!`);
     } else if (success) {
-      setPostBattleMessage(`Caught! But you don't have more room for Pokémon.`);
+      setPostBattleMessage(`Capturado! Mas você não tem espaço para mais Pokémon.`);
     } else {
-      setPostBattleMessage(`Oh, no! The Pokémon escaped!`);
+      setPostBattleMessage(`Ah, não! O Pokémon escapou!`);
     }
   };
 
@@ -110,7 +136,7 @@ function App() {
     activePokemon.stats[randomStat] += 2;
 
     setGameState(prevState => ({ ...prevState, playerTeam: newTeam }));
-    setPostBattleMessage(`${activePokemon.name} received a bonus on ${randomStat}!`);
+    setPostBattleMessage(`${activePokemon.name} recebeu um bônus em ${randomStat}!`);
   };
 
   const renderGamePhase = () => {
@@ -123,7 +149,11 @@ function App() {
         return (
           <BattleScreen 
             key={wins}
-            playerPokemon={playerTeam[activePokemonIndex]} 
+            playerTeam={playerTeam}
+            activePokemonIndex={activePokemonIndex}
+            onSwitchPokemon={handleSwitchPokemon}
+            onPlayerPokemonFaint={handlePlayerPokemonFaint}
+            onPlayerHpUpdate={handlePlayerHpUpdate}
             onBattleEnd={handleBattleEnd} 
             wins={wins}
             endOfBattleMessages={battleEndMessages}
@@ -143,9 +173,9 @@ function App() {
           />
         );
       case 'game-over':
-        return <div className="text-white text-5xl font-bold">GAME OVER</div>;
+        return <div className="text-white text-5xl font-bold">FIM DE JOGO</div>;
       default:
-        return <div className="text-white text-2xl animate-pulse">Loading...</div>;
+        return <div className="text-white text-2xl animate-pulse">Carregando...</div>;
     }
   };
 
