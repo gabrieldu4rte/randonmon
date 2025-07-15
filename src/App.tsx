@@ -35,7 +35,7 @@ function App() {
     if (didPlayerWin && defeatedEnemy) {
       const messages: string[] = [];
       const xpGained = calculateExperienceGain(activePokemon, defeatedEnemy);
-      messages.push(`${activePokemon.name} ganhou ${xpGained} XP!`);
+      messages.push(`${activePokemon.name} gained ${xpGained} experience points!`);
       activePokemon.experience += xpGained;
 
       const { leveledUp, newPokemon, levelUpMessage } = checkForLevelUp(activePokemon);
@@ -106,7 +106,7 @@ function App() {
     activePokemon.currentHp = activePokemon.stats.hp;
     
     setGameState(prevState => ({ ...prevState, playerTeam: newTeam }));
-    setPostBattleMessage(`${activePokemon.name} foi totalmente curado!`);
+    setPostBattleMessage(`${activePokemon.name} was totally healed!`);
   };
 
   const handleCapture = () => {
@@ -119,11 +119,11 @@ function App() {
       newPokemon.currentHp = newPokemon.stats.hp;
       const newTeam = [...gameState.playerTeam, newPokemon];
       setGameState(prevState => ({ ...prevState, playerTeam: newTeam }));
-      setPostBattleMessage(`Você capturou ${gameState.enemyPokemon.name}!`);
+      setPostBattleMessage(`Gotcha! ${gameState.enemyPokemon.name} was caught!`);
     } else if (success) {
-      setPostBattleMessage(`Capturado! Mas você não tem espaço para mais Pokémon.`);
+      setPostBattleMessage(`The Pokemón was caught but you don't have more room on your team. Sent to PC!`);
     } else {
-      setPostBattleMessage(`Ah, não! O Pokémon escapou!`);
+      setPostBattleMessage(`Oh, no! The Pokémon escaped!`);
     }
   };
 
@@ -136,7 +136,7 @@ function App() {
     activePokemon.stats[randomStat] += 2;
 
     setGameState(prevState => ({ ...prevState, playerTeam: newTeam }));
-    setPostBattleMessage(`${activePokemon.name} recebeu um bônus em ${randomStat}!`);
+    setPostBattleMessage(`${activePokemon.name} received a bonus in ${randomStat}!`);
   };
 
   const renderGamePhase = () => {
@@ -173,9 +173,9 @@ function App() {
           />
         );
       case 'game-over':
-        return <div className="text-white text-5xl font-bold">FIM DE JOGO</div>;
+        return <div className="text-white text-5xl font-bold">GAME OVER</div>;
       default:
-        return <div className="text-white text-2xl animate-pulse">Carregando...</div>;
+        return <div className="text-white text-2xl animate-pulse">Loading...</div>;
     }
   };
 

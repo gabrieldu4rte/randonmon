@@ -59,7 +59,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   useEffect(() => {
     const fetchEnemy = async () => {
       setTurnInProgress(true);
-      setMessage("Procurando oponente...");
+      setMessage("Searching for opponent...");
       const randomId = Math.floor(Math.random() * 151) + 1;
       const enemyData = await getPokemonDetails(randomId);
       enemyData.level = Math.max(3, playerPokemon.level - 1 + wins + Math.floor(Math.random() * 2));
@@ -69,11 +69,10 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       setEnemyCurrentHp(enemyData.stats.hp);
       const playerStarts = playerPokemon.stats.speed >= enemyData.stats.speed;
       setIsPlayerTurn(playerStarts);
-      setMessage(`Um ${enemyData.name} (Nv. ${enemyData.level}) selvagem apareceu!`);
+      setMessage(`A wild ${enemyData.name} appeared!`);
       setTurnInProgress(false);
     };
     fetchEnemy();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); 
 
   const handleEnemyMove = useCallback(() => {
@@ -81,13 +80,11 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
     setTurnInProgress(true);
     const randomMove = enemyPokemon.moves[Math.floor(Math.random() * enemyPokemon.moves.length)];
-    setMessage(`${enemyPokemon.name} usou ${randomMove.name}!`);
+    setMessage(`${enemyPokemon.name} used ${randomMove.name}!`);
     
     setTimeout(() => {
       const { damage, effectivenessMessage } = calculateDamage(enemyPokemon, playerPokemon, randomMove);
-      // Lê o HP mais recente direto das props e calcula o novo valor
       const newPlayerHp = Math.max(0, playerPokemon.currentHp - damage);
-      // Informa o App.tsx sobre a mudança de HP
       onPlayerHpUpdate(newPlayerHp);
       
       if (effectivenessMessage) {
@@ -97,7 +94,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       setTimeout(() => {
         if (newPlayerHp === 0) {
           onPlayerPokemonFaint();
-          setMessage(`${playerPokemon.name} desmaiou!`);
+          setMessage(`${playerPokemon.name} fainted!`);
 
           const hasOtherPokemon = playerTeam.some((p) => p.currentHp > 0 && p.id !== playerPokemon.id);
 
@@ -113,7 +110,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         } else {
           setIsPlayerTurn(true);
           setTurnInProgress(false);
-          setMessage("Sua vez! O que fazer?");
+          setMessage("What will you do?");
         }
       }, 1500);
     }, 1200);
@@ -129,7 +126,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     if (!isPlayerTurn || !enemyPokemon || !enemyCurrentHp || turnInProgress || battleOver) return;
     
     setTurnInProgress(true);
-    setMessage(`${playerPokemon.name} usou ${move.name}!`);
+    setMessage(`${playerPokemon.name} used ${move.name}!`);
     
     setTimeout(() => {
       const { damage, effectivenessMessage } = calculateDamage(playerPokemon, enemyPokemon, move);
@@ -143,8 +140,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       setTimeout(() => {
         if (newEnemyHp === 0) {
           setBattleOver(true);
-          setMessage(`${enemyPokemon.name} foi derrotado!`);
-          onBattleEnd(true, enemyPokemon, playerPokemon.currentHp); // Passa o HP atual do jogador
+          setMessage(`${enemyPokemon.name} fainted!`);
+          onBattleEnd(true, enemyPokemon, playerPokemon.currentHp);
         } else {
           setIsPlayerTurn(false);
           setTurnInProgress(false);
@@ -160,7 +157,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     const newPokemonName = playerTeam[newIndex].name;
 
     setTurnInProgress(true);
-    setMessage(`${oldPokemonName}, volte! Vai, ${newPokemonName}!`);
+    setMessage(`${oldPokemonName}, come back! Go, ${newPokemonName}!`);
     
     setTimeout(() => {
       onSwitchPokemon(newIndex);
@@ -170,7 +167,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         setIsForcedSwitch(false);
         setIsPlayerTurn(true);
         setTurnInProgress(false);
-        setMessage("O que fazer?");
+        setMessage("What will you do?");
       } else {
         setIsPlayerTurn(false);
         setTurnInProgress(false);
@@ -179,13 +176,12 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   };
 
   if (!enemyPokemon) {
-    return <div className="w-full h-screen bg-gray-800 flex items-center justify-center text-white text-2xl animate-pulse">Procurando um oponente...</div>;
+    return <div className="w-full h-screen bg-gray-800 flex items-center justify-center text-white text-2xl animate-pulse">Searching for opponent...</div>;
   }
   
   return (
     <div className="w-full h-screen bg-gray-800 flex flex-col p-4 overflow-hidden">
       <div className="flex justify-between items-start">
-        {/* Agora lê o HP direto da prop, a fonte da verdade */}
         <PokemonCard pokemon={playerPokemon} currentHp={playerPokemon.currentHp} isPlayer />
         <PokemonCard pokemon={enemyPokemon} currentHp={enemyCurrentHp || 0} />
       </div>
@@ -216,7 +212,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
                   ))}
                   <button onClick={() => setActionView('pokemon')} disabled={turnInProgress || playerTeam.length <= 1}
                     className="col-span-2 bg-yellow-500 hover:bg-yellow-600 border-4 border-yellow-700 text-white font-bold text-lg py-2 px-4 rounded-lg shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed">
-                    Trocar Pokémon
+                    Switch Pokémon
                   </button>
                 </div>
               ) : (
@@ -235,7 +231,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
                   {!isForcedSwitch && (
                     <button onClick={() => setActionView('moves')}
                       className="mt-2 bg-gray-500 hover:bg-gray-600 border-4 border-gray-700 text-white font-bold text-lg py-2 px-4 rounded-lg shadow-md">
-                      Voltar
+                      Back to Moves
                     </button>
                   )}
                 </div>
