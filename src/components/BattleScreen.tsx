@@ -4,6 +4,7 @@ import { getPokemonDetails } from '../api/pokeapi';
 import { calculateDamage } from '../logic/battle';
 import { PokemonCard } from './Pokemon/PokemonCard';
 import { calculateStatsForLevel } from '../logic/progression';
+import BattleBackground from '../assets/background.jpg';
 
 interface BattleScreenProps {
   playerTeam: Pokemon[];
@@ -180,7 +181,9 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   }
   
   return (
-    <div className="w-full h-screen bg-gray-800 flex flex-col p-4 overflow-hidden">
+    <div 
+      className="w-full h-screen flex flex-col p-4 overflow-hidden bg-cover bg-center"
+      style={{ backgroundImage: `url(${BattleBackground})` }}>
       <div className="flex justify-between items-start">
         <PokemonCard pokemon={playerPokemon} currentHp={playerPokemon.currentHp} isPlayer />
         <PokemonCard pokemon={enemyPokemon} currentHp={enemyCurrentHp || 0} />
