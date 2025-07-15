@@ -1,3 +1,52 @@
+# RandomMon
+
+RandomMon is a web game where you choose a random starter Pokémon from a list of 3 options, and after that, you must battle with randomly generated Pokémon.
+
+# Features
+
+## Random Pokémon
+
+Pokémon are randomly generated, so you need to win with the limited options.
+
+## Random Moves
+
+Moves and Attacks are randomly generated from the list of moves learned by the Pokémon, so you need to adapt with the resources you have.
+
+## Random Enemies
+
+Wild Pokémon are also randomly generated, so you'll need strategy to win battles.
+
+# Mechanics
+
+## Battles
+
+In the game, you can battle wild Pokémon in a turn-based format and use damaging moves to lower the enemy Pokémon's HP. Moves that cause status or conditions other than damage will also be implemented.
+
+## Rewards
+
+After winning each battle, you can choose between three options:
+
+- Heal your current Pokémon.
+
+- Attempt to capture the defeated Pokémon.
+
+- Receive a bonus to a random attribute.
+
+## Switching Pokémon
+
+During battle, you can switch your active Pokémon for another one on your team, providing a greater strategic range during fights.
+
+# FOR FUTURE UPDATES
+
+- ( ) Status moves.
+- ( ) Game Balance.
+- ( ) Better progression.
+- ( ) More roguelike mechanics for the rewards.
+
+# Disclaimer
+
+Pokémon and Pokémon character names are trademarks of Nintendo.
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
