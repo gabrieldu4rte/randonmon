@@ -53,7 +53,7 @@ export async function getPokemonDetails(id: number | string): Promise<Pokemon> {
 export async function getRandomPokemonList(count: number = 3): Promise<Pokemon[]> {
   const randomIds: number[] = [];
   while (randomIds.length < count) {
-    const randomId = Math.floor(Math.random() * 1025) + 1;
+    const randomId = Math.floor(Math.random() * 151) + 1;
     if (!randomIds.includes(randomId)) {
       randomIds.push(randomId);
     }

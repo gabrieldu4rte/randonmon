@@ -110,7 +110,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         } else {
           setIsPlayerTurn(true);
           setTurnInProgress(false);
-          setMessage("What will you do?");
+          setMessage(`What will ${playerPokemon.name} do?`);
         }
       }, 1500);
     }, 1200);
@@ -167,7 +167,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         setIsForcedSwitch(false);
         setIsPlayerTurn(true);
         setTurnInProgress(false);
-        setMessage("What will you do?");
+        setMessage(`What will ${playerPokemon.name} do?`);
       } else {
         setIsPlayerTurn(false);
         setTurnInProgress(false);
@@ -199,7 +199,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           <p className="text-2xl font-semibold text-gray-800">{message}</p>
         </div>
 
-        <div className="flex flex-col h-full">
+        <div className="h-full">
           {isPlayerTurn && !battleOver && (
             <>
               {actionView === 'moves' ? (
@@ -216,21 +216,19 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
                   </button>
                 </div>
               ) : (
-                <div className="flex flex-col h-full justify-between">
-                  <div className="overflow-y-auto grid grid-cols-2 gap-3 pr-2">
-                    {playerTeam.map((pokemon, index) => {
-                      if (index === activePokemonIndex && !isForcedSwitch) return null;
-                      return (
-                        <button key={pokemon.id} onClick={() => executeSwitch(index)} disabled={pokemon.currentHp <= 0}
-                          className="bg-white hover:bg-gray-200 border-4 border-gray-400 text-gray-800 font-bold text-lg py-2 px-4 rounded-lg capitalize shadow-md disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed">
-                          {pokemon.name} <span className="text-sm">({pokemon.currentHp}/{pokemon.stats.hp} HP)</span>
-                        </button>
-                      )
-                    })}
-                  </div>
+                <div className="h-full overflow-y-auto grid grid-cols-2 gap-3 pr-2 content-start">
+                  {playerTeam.map((pokemon, index) => {
+                    if (index === activePokemonIndex && !isForcedSwitch) return null;
+                    return (
+                      <button key={pokemon.id} onClick={() => executeSwitch(index)} disabled={pokemon.currentHp <= 0}
+                        className="bg-white hover:bg-gray-200 border-4 border-gray-400 text-gray-800 font-bold text-lg py-2 px-4 rounded-lg capitalize shadow-md disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed">
+                        {pokemon.name} <span className="text-sm">({pokemon.currentHp}/{pokemon.stats.hp} HP)</span>
+                      </button>
+                    )
+                  })}
                   {!isForcedSwitch && (
                     <button onClick={() => setActionView('moves')}
-                      className="mt-2 bg-gray-500 hover:bg-gray-600 border-4 border-gray-700 text-white font-bold text-lg py-2 px-4 rounded-lg shadow-md">
+                      className="bg-gray-500 hover:bg-gray-600 border-4 border-gray-700 text-white font-bold text-lg py-2 px-4 rounded-lg shadow-md">
                       Back to Moves
                     </button>
                   )}
