@@ -1,6 +1,8 @@
 # RandomMon
 
-RandomMon is a web game where you choose a random starter Pokémon from a list of 3 options, and after that, you must battle with randomly generated Pokémon.
+RandomMon is a web game where you choose a random starter Pokémon from a list of 3 options, and after that, you must battle with randomly generated Pokémon. This project uses the **PokéAPI** to generate the Pokémon, and the battle moves.
+
+Check out the API here: [PokéAPI](https://pokeapi.co/)
 
 # Features
 
@@ -46,6 +48,13 @@ During battle, you can switch your active Pokémon for another one on your team,
 # Disclaimer
 
 Pokémon and Pokémon character names are trademarks of Nintendo.
+
+# Technologies Used
+- React
+- TypeScript
+- API Consumption
+- TailwindCSS
+
 
 # React + TypeScript + Vite
 
