@@ -11,8 +11,7 @@ interface PostBattleScreenProps {
   onNextBattle: () => void;
 }
 
-export const PostBattleScreen: React.FC<PostBattleScreenProps> = ({ 
-  wins, 
+export const PostBattleScreen: React.FC<PostBattleScreenProps> = ({  
   defeatedPokemon,
   onHeal, 
   onCapture, 

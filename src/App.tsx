@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { GameState, Pokemon } from './interfaces';
 import { InitialSelection } from './components/InitialSelection';
 import { BattleScreen } from './components/BattleScreen';
