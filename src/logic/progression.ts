@@ -2,14 +2,20 @@ import { Pokemon } from "../interfaces";
 
 const XP_PER_LEVEL = 100;
 
-export function calculateStatsForLevel(baseStats: Pokemon['stats'], level: number): Pokemon['stats'] {
+export function calculateStatsForLevel(baseStats: Pokemon['stats'], level: number, isPlayer: boolean = false): Pokemon['stats'] {
   const calculatedStats = { ...baseStats };
-  calculatedStats.hp = Math.floor(((baseStats.hp * 2 * level) / 100) + level + 10);
+  
+  const hpIV = isPlayer ? 20 : 10; 
+  calculatedStats.hp = Math.floor(((baseStats.hp + hpIV) * 2 * level) / 100) + level + 10;
+  
+  
   (Object.keys(baseStats) as Array<keyof typeof baseStats>).forEach(stat => {
     if (stat !== 'hp') {
-      calculatedStats[stat] = Math.floor(((baseStats[stat] * 2 * level) / 100) + 5);
+      const iv = isPlayer ? 20 : 10; 
+      calculatedStats[stat] = Math.floor(((baseStats[stat] + iv) * 2 * level) / 100) + 5;
     }
   });
+  
   return calculatedStats;
 }
 
@@ -27,10 +33,12 @@ export function checkForLevelUp(pokemon: Pokemon): { leveledUp: boolean; newPoke
     newPokemon.level++;
     newPokemon.experience -= newPokemon.experienceToNextLevel;
     newPokemon.experienceToNextLevel += XP_PER_LEVEL;
-
-    Object.keys(newPokemon.stats).forEach(stat => {
-        newPokemon.stats[stat as keyof typeof newPokemon.stats] += Math.floor(Math.random() * 2) + 1;
-    });
+  }
+  
+  if (leveledUp) {
+    newPokemon.stats = calculateStatsForLevel(newPokemon.baseStats, newPokemon.level, true);
+    
+    newPokemon.currentHp = newPokemon.stats.hp;
   }
   
   let levelUpMessage = '';

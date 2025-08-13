@@ -3,7 +3,7 @@ import { GameState, Pokemon } from './interfaces';
 import { InitialSelection } from './components/InitialSelection';
 import { BattleScreen } from './components/BattleScreen';
 import { PostBattleScreen } from './components/PostBattleScreen';
-import { calculateExperienceGain, checkForLevelUp } from './logic/progression';
+import { calculateExperienceGain, checkForLevelUp, calculateStatsForLevel } from './logic/progression';
 import { calculateCaptureChance, getPokeball } from './logic/capture';
 
 function App() {
@@ -104,6 +104,7 @@ function App() {
     const newTeam = [...gameState.playerTeam];
     const activePokemon = newTeam[gameState.activePokemonIndex];
     activePokemon.currentHp = activePokemon.stats.hp;
+    activePokemon.statusCondition = undefined;
     
     setGameState(prevState => ({ ...prevState, playerTeam: newTeam }));
     setPostBattleMessage(`${activePokemon.name} was totally healed!`);
@@ -116,6 +117,10 @@ function App() {
 
     if (success && gameState.playerTeam.length < 6) {
       const newPokemon = { ...gameState.enemyPokemon };
+      newPokemon.currentHp = newPokemon.stats.hp;
+      newPokemon.statusCondition = undefined;
+      newPokemon.statModifiers = { attack: 0, defense: 0, 'special-attack': 0, 'special-defense': 0, speed: 0, accuracy: 0, evasion: 0 };
+      newPokemon.stats = calculateStatsForLevel(newPokemon.baseStats, newPokemon.level, true);
       newPokemon.currentHp = newPokemon.stats.hp;
       const newTeam = [...gameState.playerTeam, newPokemon];
       setGameState(prevState => ({ ...prevState, playerTeam: newTeam }));

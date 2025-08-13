@@ -1,4 +1,5 @@
 import { Pokemon, Move } from "../interfaces";
+import { getModifiedStats } from "./statusEffects";
 
 const typeChart: { [attacker: string]: { [defender: string]: number } } = {
   normal: {
@@ -175,8 +176,10 @@ export function calculateDamage(attacker: Pokemon, defender: Pokemon, move: Move
   }
 
   const isSpecial = move.damage_class === 'special';
-  const attackStat = isSpecial ? attacker.stats['special-attack'] : attacker.stats.attack;
-  const defenseStat = isSpecial ? defender.stats['special-defense'] : defender.stats.defense;
+  const attackerStats = getModifiedStats(attacker);
+  const defenderStats = getModifiedStats(defender);
+  const attackStat = isSpecial ? attackerStats['special-attack'] : attackerStats.attack;
+  const defenseStat = isSpecial ? defenderStats['special-defense'] : defenderStats.defense;
   
   const stab = attacker.types.includes(move.type) ? 1.5 : 1;
   const effectiveness = getTypeEffectiveness(move.type, defender.types);
@@ -184,7 +187,11 @@ export function calculateDamage(attacker: Pokemon, defender: Pokemon, move: Move
 
   const baseDamage = (((2 * attacker.level / 5 + 2) * move.power * (attackStat / defenseStat)) / 50) + 2;
   
-  const finalDamage = Math.floor(baseDamage * stab * effectiveness * randomFactor);
+  let finalDamage = Math.floor(baseDamage * stab * effectiveness * randomFactor);
+  
+  if (attacker.statusCondition?.type === 'burn' && !isSpecial) {
+    finalDamage = Math.floor(finalDamage * 0.5);
+  }
   
   let effectivenessMessage = '';
   if (effectiveness > 1) effectivenessMessage = "It's super effective!";
